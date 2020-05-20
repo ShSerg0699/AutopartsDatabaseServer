@@ -6,6 +6,7 @@ import nsu.shserg.AutopartsDatabaseServer.exception.DetailNotFoundException;
 import nsu.shserg.AutopartsDatabaseServer.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,13 +34,12 @@ public class DetailController {
     }
 
     @RequestMapping(method = GET, value = "detail")
-    public Detail getDetail(@RequestParam(required = true) Integer detailID) {
+    public ResponseEntity<Detail> getDetail(@RequestParam Integer detailID) {
         Optional<Detail> optional = detailRepository.findById(detailID);
         if (optional.isEmpty()) {
             throw new DetailNotFoundException();
         }
-        Detail detail = optional.get();
-        return detail;
+        return new ResponseEntity<Detail>(optional.get(), HttpStatus.OK);
     }
 
     @RequestMapping(method = GET, value = "detailAll")
@@ -48,21 +48,23 @@ public class DetailController {
     }
 
     @RequestMapping(method = POST, value = "detailAdd")
-    public Detail add(@RequestBody Detail detail) {
-        return detailRepository.save(detail);
+    public HttpStatus add(@RequestBody Detail detail) {
+        detailRepository.save(detail);
+        return HttpStatus.ACCEPTED;
     }
 
     @RequestMapping(method = PATCH, value = "detailUpdate")
-    public Detail update(@RequestBody Detail detail) {
+    public HttpStatus update(@RequestBody Detail detail) {
         Optional<Detail> optional = detailRepository.findById(detail.getDetailID());
         if (optional.isEmpty()) {
             throw new DetailNotFoundException();
         }
-        return detailRepository.save(detail);
+        detailRepository.save(detail);
+        return HttpStatus.ACCEPTED;
     }
 
     @RequestMapping(method = DELETE, value = "detailDrop")
-    public HttpStatus drop(@RequestParam(required = true) Integer detailID) {
+    public HttpStatus drop(@RequestParam Integer detailID) {
         Optional<Detail> optional = detailRepository.findById(detailID);
         if (!optional.isEmpty()) {
             throw new DetailNotFoundException();
@@ -72,7 +74,7 @@ public class DetailController {
         for (PurchaseDetail purchaseDetail : purchaseDetailList) {
             purchaseDetailRepository.delete(purchaseDetail);
         }
-
+//fixme: drop cascade
         detailRepository.delete(detail);
         return HttpStatus.ACCEPTED;
     }

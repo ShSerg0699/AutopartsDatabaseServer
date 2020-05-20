@@ -6,6 +6,7 @@ import nsu.shserg.AutopartsDatabaseServer.repository.BuyerRepository;
 import nsu.shserg.AutopartsDatabaseServer.repository.PurchaseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,40 +26,43 @@ public class BuyerController {
     }
 
     @RequestMapping(method = GET, value = "buyer")
-    public Buyer getDetail(@RequestParam(required = true) Integer buyerID) {
+    public ResponseEntity<Buyer> getDetail(@RequestParam Integer buyerID) {
         Optional<Buyer> optional = buyerRepository.findById(buyerID);
-        Buyer buyer = optional.get();
-        return buyer;
+        if (optional.isEmpty()){
+            throw new BuyerNotFoundException();
+        }
+        return new ResponseEntity<Buyer>(optional.get(), HttpStatus.OK);
     }
 
     @RequestMapping(method = GET, value = "buyerAll")
-    public List<Buyer> getAllDetail() {
-        return buyerRepository.findAll();
+    public ResponseEntity<List<Buyer>> getAllDetail() {
+        return new ResponseEntity<List<Buyer>>(buyerRepository.findAll(), HttpStatus.OK);
     }
 
     @RequestMapping(method = POST, value = "buyerAdd")
-    public Buyer add(@RequestBody Buyer buyer) {
-        return buyerRepository.save(buyer);
+    public HttpStatus add(@RequestBody Buyer buyer) {
+        buyerRepository.save(buyer);
+        return HttpStatus.ACCEPTED;
     }
 
     @RequestMapping(method = PATCH, value = "buyerUpdate")
-    public Buyer update(@RequestBody Buyer buyer) {
+    public HttpStatus update(@RequestBody Buyer buyer) {
         Optional<Buyer> optional = buyerRepository.findById(buyer.getBuyerID());
         if (optional.isEmpty()) {
-            return null;
+            throw new BuyerNotFoundException();
         }
-        return buyerRepository.save(buyer);
+        buyerRepository.save(buyer);
+        return HttpStatus.ACCEPTED;
     }
 
     @RequestMapping(method = DELETE, value = "buyerDrop")
-    public HttpStatus drop(@RequestParam(required = true) Integer buyerID) {
+    public HttpStatus drop(@RequestParam Integer buyerID) {
         Optional<Buyer> optional = buyerRepository.findById(buyerID);
         if (!optional.isEmpty()) {
             throw new BuyerNotFoundException();
         }
         //fixme: drop cascade
-        Buyer buyer = optional.get();
-        buyerRepository.delete(buyer);
+        buyerRepository.delete(optional.get());
         return HttpStatus.ACCEPTED;
     }
 }

@@ -7,7 +7,7 @@ import java.util.List;
 @Data
 public class CellInStockDto {
     private Integer cellID;
-    private List<DetailInStockDto> detailList;
+    private List<DetailInCellDto> detailList;
     private int space;
 
 }

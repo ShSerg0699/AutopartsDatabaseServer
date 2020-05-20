@@ -2,10 +2,7 @@ package nsu.shserg.AutopartsDatabaseServer.controller;
 
 import nsu.shserg.AutopartsDatabaseServer.dto.DetailDto;
 import nsu.shserg.AutopartsDatabaseServer.dto.PurchaseDto;
-import nsu.shserg.AutopartsDatabaseServer.entity.Buyer;
-import nsu.shserg.AutopartsDatabaseServer.entity.Detail;
-import nsu.shserg.AutopartsDatabaseServer.entity.Purchase;
-import nsu.shserg.AutopartsDatabaseServer.entity.PurchaseDetail;
+import nsu.shserg.AutopartsDatabaseServer.entity.*;
 import nsu.shserg.AutopartsDatabaseServer.exception.BuyerNotFoundException;
 import nsu.shserg.AutopartsDatabaseServer.exception.DetailNotFoundException;
 import nsu.shserg.AutopartsDatabaseServer.exception.PurchaseNotFoundException;
@@ -13,7 +10,6 @@ import nsu.shserg.AutopartsDatabaseServer.repository.BuyerRepository;
 import nsu.shserg.AutopartsDatabaseServer.repository.DetailRepository;
 import nsu.shserg.AutopartsDatabaseServer.repository.PurchaseDetailRepository;
 import nsu.shserg.AutopartsDatabaseServer.repository.PurchaseRepository;
-import nsu.shserg.AutopartsDatabaseServer.service.PurchaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,26 +27,34 @@ public class PurchaseController {
     private final BuyerRepository buyerRepository;
     private final DetailRepository detailRepository;
     private final PurchaseDetailRepository purchaseDetailRepository;
-    private final PurchaseService purchaseService;
 
     @Autowired
     public PurchaseController(PurchaseRepository purchaseRepository, BuyerRepository buyerRepository,
-                              DetailRepository detailRepository, PurchaseDetailRepository purchaseDetailRepository, PurchaseService purchaseService) {
+                              DetailRepository detailRepository, PurchaseDetailRepository purchaseDetailRepository) {
         this.purchaseRepository = purchaseRepository;
         this.buyerRepository = buyerRepository;
         this.detailRepository = detailRepository;
         this.purchaseDetailRepository = purchaseDetailRepository;
-        this.purchaseService = purchaseService;
     }
 
     @RequestMapping(method = GET, value = "purchase")
     public ResponseEntity<PurchaseDto> getPurchase(@RequestParam Integer purchaseID) {
-        return new ResponseEntity<PurchaseDto>(purchaseService.getPurchase(purchaseID), HttpStatus.OK);
+        Optional<Purchase> optional = purchaseRepository.findById(purchaseID);
+        if (optional.isEmpty()) {
+            throw new PurchaseNotFoundException();
+        }
+        Purchase purchase = optional.get();
+        return new ResponseEntity<PurchaseDto>(translateToDto(purchase), HttpStatus.OK);
     }
 
     @RequestMapping(method = GET, value = "purchaseAll")
     public ResponseEntity<List<PurchaseDto>> getAllPurchase() {
-        return new ResponseEntity<List<PurchaseDto>>(purchaseService.getAllPurchase(), HttpStatus.OK);
+        List<Purchase> purchaseList = purchaseRepository.findAll();
+        List<PurchaseDto> purchaseDtoList = new ArrayList<>();
+        for (Purchase purchase : purchaseList) {
+            purchaseDtoList.add(translateToDto(purchase));
+        }
+        return new ResponseEntity<List<PurchaseDto>>(purchaseDtoList, HttpStatus.OK);
     }
 
     @RequestMapping(method = POST, value = "purchaseAdd")
@@ -59,11 +63,6 @@ public class PurchaseController {
         if (buyerOptional.isEmpty()) {
             throw new BuyerNotFoundException();
         }
-        Purchase purchase = new Purchase();
-        purchase.setPurchaseID(purchaseDto.getPurchaseID());
-        purchase.setPurchaseDate(purchaseDto.getPurchaseDate());
-        purchase.setBuyer(buyerOptional.get());
-        purchaseRepository.save(purchase);
         List<DetailDto> listDetail = purchaseDto.getDetailList();
         for (DetailDto detailDto : listDetail) {
             Optional<Detail> detailOptional = detailRepository.findById(detailDto.getDetailID());
@@ -71,6 +70,11 @@ public class PurchaseController {
                 throw new DetailNotFoundException();
             }
         }
+        Purchase purchase = new Purchase();
+        purchase.setPurchaseID(purchaseDto.getPurchaseID());
+        purchase.setPurchaseDate(purchaseDto.getPurchaseDate());
+        purchase.setBuyer(buyerOptional.get());
+        purchaseRepository.save(purchase);
         for (DetailDto detailDto : listDetail) {
             Optional<Detail> detailOptional = detailRepository.findById(detailDto.getDetailID());
             PurchaseDetail purchaseDetail = new PurchaseDetail();
@@ -138,6 +142,29 @@ public class PurchaseController {
         return HttpStatus.ACCEPTED;
     }
 
+    @RequestMapping(method = DELETE, value = "purchaseDropDetail")
+    public HttpStatus purchaseDropDetail(@RequestParam Integer purchaseID, @RequestParam Integer detailID){
+        Optional<Detail> optionalDetail = detailRepository.findById(detailID);
+        if(optionalDetail.isEmpty()){
+            throw new DetailNotFoundException();
+        }
+        Optional<Purchase> optionalPurchase = purchaseRepository.findById(purchaseID);
+        if(optionalDetail.isEmpty()){
+            throw new PurchaseNotFoundException();
+        }
+        Detail detail =optionalDetail.get();
+        Purchase purchase = optionalPurchase.get();
+        HttpStatus httpStatus = HttpStatus.NOT_FOUND;
+        List<PurchaseDetail> purchaseDetailList = purchaseDetailRepository.findAllByPurchase(purchase);
+        for (PurchaseDetail purchaseDetail : purchaseDetailList) {
+            if (purchaseDetail.getDetail().getDetailID().equals(detail.getDetailID())) {
+                purchaseDetailRepository.delete(purchaseDetail);
+                httpStatus = HttpStatus.ACCEPTED;
+            }
+        }
+        return httpStatus;
+    }
+
     @RequestMapping(method = DELETE, value = "purchaseDrop")
     public HttpStatus drop(@RequestParam Integer purchaseID) {
         Optional<Purchase> optional = purchaseRepository.findById(purchaseID);
@@ -151,5 +178,25 @@ public class PurchaseController {
         }
         purchaseRepository.delete(purchase);
         return HttpStatus.ACCEPTED;
+    }
+
+    private PurchaseDto translateToDto(Purchase purchase){
+        PurchaseDto purchaseDto = new PurchaseDto();
+        purchaseDto.setPurchaseID(purchase.getPurchaseID());
+        purchaseDto.setPurchaseDate(purchase.getPurchaseDate());
+        purchaseDto.setBuyer(purchase.getBuyer());
+        List<PurchaseDetail> purchaseDetailList = purchaseDetailRepository.findAllByPurchase(purchase);
+        List<DetailDto> detailDtoList = new ArrayList<>();
+        for (PurchaseDetail purchaseDetail : purchaseDetailList) {
+            Detail detail = purchaseDetail.getDetail();
+            DetailDto detailDto = new DetailDto();
+            detailDto.setDetailID(detail.getDetailID());
+            detailDto.setName(detail.getName());
+            detailDto.setPrice(detail.getPrice());
+            detailDto.setQuantity(purchaseDetail.getQuantity());
+            detailDtoList.add(detailDto);
+        }
+        purchaseDto.setDetailList(detailDtoList);
+        return purchaseDto;
     }
 }

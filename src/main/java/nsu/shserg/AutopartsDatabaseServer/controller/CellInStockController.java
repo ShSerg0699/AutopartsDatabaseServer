@@ -1,13 +1,10 @@
 package nsu.shserg.AutopartsDatabaseServer.controller;
 
 import nsu.shserg.AutopartsDatabaseServer.dto.CellInStockDto;
-import nsu.shserg.AutopartsDatabaseServer.dto.DetailDto;
-import nsu.shserg.AutopartsDatabaseServer.dto.DetailInStockDto;
-import nsu.shserg.AutopartsDatabaseServer.dto.PurchaseDto;
+import nsu.shserg.AutopartsDatabaseServer.dto.DetailInCellDto;
 import nsu.shserg.AutopartsDatabaseServer.entity.CellDetail;
 import nsu.shserg.AutopartsDatabaseServer.entity.CellInStock;
 import nsu.shserg.AutopartsDatabaseServer.entity.Detail;
-import nsu.shserg.AutopartsDatabaseServer.entity.PurchaseDetail;
 import nsu.shserg.AutopartsDatabaseServer.exception.CellInStockNotFoundException;
 import nsu.shserg.AutopartsDatabaseServer.exception.CellNotEnoughStorageException;
 import nsu.shserg.AutopartsDatabaseServer.exception.DetailNotFoundException;
@@ -39,7 +36,7 @@ public class CellInStockController {
     }
 
     @RequestMapping(method = GET, value = "cell")
-    public ResponseEntity<CellInStockDto> getCell(@RequestParam(required = true) Integer cellID) {
+    public ResponseEntity<CellInStockDto> getCell(@RequestParam Integer cellID) {
         Optional<CellInStock> optional = cellInStockRepository.findById(cellID);
         if (optional.isEmpty()) {
             throw new CellInStockNotFoundException();
@@ -49,10 +46,10 @@ public class CellInStockController {
         cellInStockDto.setCellID(cell.getCellID());
         cellInStockDto.setSpace(cell.getSpace());
         List<CellDetail> cellDetailList = cellDetailRepository.findAllByCellInStock(cell);
-        List<DetailInStockDto> detailDtoList = new ArrayList<>();
+        List<DetailInCellDto> detailDtoList = new ArrayList<>();
         for (CellDetail cellDetail : cellDetailList) {
             Detail detail = cellDetail.getDetail();
-            DetailInStockDto detailDto = new DetailInStockDto();
+            DetailInCellDto detailDto = new DetailInCellDto();
             detailDto.setDetailID(detail.getDetailID());
             detailDto.setSize(detail.getSize());
             detailDto.setAppearanceDate(cellDetail.getAppearanceDate());
@@ -71,10 +68,10 @@ public class CellInStockController {
             cellInStockDto.setCellID(cell.getCellID());
             cellInStockDto.setSpace(cell.getSpace());
             List<CellDetail> cellDetailList = cellDetailRepository.findAllByCellInStock(cell);
-            List<DetailInStockDto> detailDtoList = new ArrayList<>();
+            List<DetailInCellDto> detailDtoList = new ArrayList<>();
             for (CellDetail cellDetail : cellDetailList) {
                 Detail detail = cellDetail.getDetail();
-                DetailInStockDto detailDto = new DetailInStockDto();
+                DetailInCellDto detailDto = new DetailInCellDto();
                 detailDto.setDetailID(detail.getDetailID());
                 detailDto.setSize(detail.getSize());
                 detailDto.setAppearanceDate(cellDetail.getAppearanceDate());
@@ -87,49 +84,76 @@ public class CellInStockController {
     }
 
     @RequestMapping(method = POST, value = "cellAdd")
-    public CellInStock add(@RequestBody CellInStock cell) {
-        return cellInStockRepository.save(cell);
+    public HttpStatus add(@RequestBody CellInStock cell) {
+        cellInStockRepository.save(cell);
+        return HttpStatus.ACCEPTED;
     }
 
     @RequestMapping(method = PATCH, value = "cellUpdate")
-    public CellInStock update(@RequestBody CellInStock cell) {
+    public HttpStatus update(@RequestBody CellInStock cell) {
         Optional<CellInStock> optional = cellInStockRepository.findById(cell.getCellID());
         if (optional.isEmpty()) {
-            return null;
+            throw new CellInStockNotFoundException();
         }
-        return cellInStockRepository.save(cell);
+        cellInStockRepository.save(cell);
+        return HttpStatus.ACCEPTED;
     }
 
     @RequestMapping(method = POST, value = "cellAddDetail")
-    public HttpStatus cellAddDetail(@RequestParam Integer cellID, @RequestBody DetailInStockDto detailInStockDto) {
+    public HttpStatus cellAddDetail(@RequestParam Integer cellID, @RequestBody DetailInCellDto detailInCellDto) {
         Optional<CellInStock> cellOptional = cellInStockRepository.findById(cellID);
         if (cellOptional.isEmpty()) {
             throw new CellInStockNotFoundException();
         }
-        Optional<Detail> detailOptional = detailRepository.findById(detailInStockDto.getDetailID());
+        Optional<Detail> detailOptional = detailRepository.findById(detailInCellDto.getDetailID());
         if (detailOptional.isEmpty()) {
             throw new DetailNotFoundException();
         }
         Detail detail = detailOptional.get();
         CellInStock cell = cellOptional.get();
-        if (detail.getSize() * detailInStockDto.getQuantity() > cell.getSpace()) {
+        if (detail.getSize() * detailInCellDto.getQuantity() > cell.getSpace()) {
             throw new CellNotEnoughStorageException();
         }
         CellDetail cellDetail = new CellDetail();
         cellDetail.setCellInStock(cell);
         cellDetail.setDetail(detail);
-        cellDetail.setQuantity(detailInStockDto.getQuantity());
-        cellDetail.setAppearanceDate(detailInStockDto.getAppearanceDate());
+        cellDetail.setQuantity(detailInCellDto.getQuantity());
+        cellDetail.setAppearanceDate(detailInCellDto.getAppearanceDate());
 
         return HttpStatus.ACCEPTED;
     }
 
+    @RequestMapping(method = DELETE, value = "cellDropDetail")
+    public HttpStatus cellDropDetail(@RequestParam Integer cellID, @RequestParam Integer detailID) {
+        Optional<CellInStock> cellOptional = cellInStockRepository.findById(cellID);
+        if (cellOptional.isEmpty()) {
+            throw new CellInStockNotFoundException();
+        }
+        Optional<Detail> detailOptional = detailRepository.findById(detailID);
+        if (detailOptional.isEmpty()) {
+            throw new DetailNotFoundException();
+        }
+        Detail detail = detailOptional.get();
+        CellInStock cell = cellOptional.get();
+        HttpStatus httpStatus = HttpStatus.NOT_FOUND;
+        List<CellDetail> cellDetailList = cellDetailRepository.findAllByCellInStock(cell);
+        for (CellDetail cellDetail : cellDetailList) {
+            if (cellDetail.getDetail().getDetailID().equals(detail.getDetailID())) {
+                cellDetailRepository.delete(cellDetail);
+                httpStatus = HttpStatus.ACCEPTED;
+            }
+        }
+        return httpStatus;
+    }
+
     @RequestMapping(method = DELETE, value = "cellDrop")
-    public void drop(@RequestParam(required = true) Integer cellID) {
+    public HttpStatus drop(@RequestParam Integer cellID) {
         Optional<CellInStock> optional = cellInStockRepository.findById(cellID);
         if (!optional.isEmpty()) {
-            CellInStock cell = optional.get();
-            cellInStockRepository.delete(cell);
+            throw new CellInStockNotFoundException();
         }
+        CellInStock cell = optional.get();
+        cellInStockRepository.delete(cell);
+        return HttpStatus.ACCEPTED;
     }
 }
