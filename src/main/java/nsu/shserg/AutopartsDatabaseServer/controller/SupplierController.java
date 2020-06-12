@@ -18,6 +18,7 @@ import java.util.Optional;
 import static org.springframework.web.bind.annotation.RequestMethod.*;
 
 @RestController
+@CrossOrigin
 public class SupplierController {
     private final SupplierRepository supplierRepository;
     private final PriceListRepository priceListRepository;

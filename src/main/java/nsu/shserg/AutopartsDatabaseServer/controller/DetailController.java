@@ -15,6 +15,7 @@ import java.util.Optional;
 import static org.springframework.web.bind.annotation.RequestMethod.*;
 
 @RestController
+@CrossOrigin
 public class DetailController {
     private final DetailRepository detailRepository;
     private final PurchaseDetailRepository purchaseDetailRepository;
@@ -66,7 +67,7 @@ public class DetailController {
     @RequestMapping(method = DELETE, value = "detailDrop")
     public HttpStatus drop(@RequestParam Integer detailID) {
         Optional<Detail> optional = detailRepository.findById(detailID);
-        if (!optional.isEmpty()) {
+        if (optional.isEmpty()) {
             throw new DetailNotFoundException();
         }
         Detail detail = optional.get();

@@ -22,6 +22,7 @@ import java.util.Optional;
 import static org.springframework.web.bind.annotation.RequestMethod.*;
 
 @RestController
+@CrossOrigin
 public class PurchaseController {
     private final PurchaseRepository purchaseRepository;
     private final BuyerRepository buyerRepository;
@@ -149,7 +150,7 @@ public class PurchaseController {
             throw new DetailNotFoundException();
         }
         Optional<Purchase> optionalPurchase = purchaseRepository.findById(purchaseID);
-        if(optionalDetail.isEmpty()){
+        if(optionalPurchase.isEmpty()){
             throw new PurchaseNotFoundException();
         }
         Detail detail =optionalDetail.get();
@@ -168,7 +169,7 @@ public class PurchaseController {
     @RequestMapping(method = DELETE, value = "purchaseDrop")
     public HttpStatus drop(@RequestParam Integer purchaseID) {
         Optional<Purchase> optional = purchaseRepository.findById(purchaseID);
-        if (!optional.isEmpty()) {
+        if (optional.isEmpty()) {
             throw new PurchaseNotFoundException();
         }
         Purchase purchase = optional.get();
@@ -176,7 +177,7 @@ public class PurchaseController {
         for (PurchaseDetail purchaseDetail : purchaseDetailList) {
             purchaseDetailRepository.delete(purchaseDetail);
         }
-        purchaseRepository.delete(purchase);
+        purchaseRepository.delete(purchase);//fixme: can't drop if two or more buyer in table
         return HttpStatus.ACCEPTED;
     }
 

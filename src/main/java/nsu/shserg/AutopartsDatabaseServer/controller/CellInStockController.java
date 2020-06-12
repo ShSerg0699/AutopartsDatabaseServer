@@ -23,6 +23,7 @@ import java.util.Optional;
 import static org.springframework.web.bind.annotation.RequestMethod.*;
 
 @RestController
+@CrossOrigin
 public class CellInStockController {
     private final CellInStockRepository cellInStockRepository;
     private final DetailRepository detailRepository;
@@ -52,6 +53,7 @@ public class CellInStockController {
             DetailInCellDto detailDto = new DetailInCellDto();
             detailDto.setDetailID(detail.getDetailID());
             detailDto.setSize(detail.getSize());
+            detailDto.setQuantity(cellDetail.getQuantity());
             detailDto.setAppearanceDate(cellDetail.getAppearanceDate());
             detailDtoList.add(detailDto);
         }
@@ -74,6 +76,7 @@ public class CellInStockController {
                 DetailInCellDto detailDto = new DetailInCellDto();
                 detailDto.setDetailID(detail.getDetailID());
                 detailDto.setSize(detail.getSize());
+                detailDto.setQuantity(cellDetail.getQuantity());
                 detailDto.setAppearanceDate(cellDetail.getAppearanceDate());
                 detailDtoList.add(detailDto);
             }
@@ -111,7 +114,12 @@ public class CellInStockController {
         }
         Detail detail = detailOptional.get();
         CellInStock cell = cellOptional.get();
-        if (detail.getSize() * detailInCellDto.getQuantity() > cell.getSpace()) {
+        List<CellDetail> cellDetailList = cellDetailRepository.findAllByCellInStock(cell);
+        int occupiedSpace = 0;
+        for (CellDetail cellDetail : cellDetailList) {
+            occupiedSpace += cellDetail.getDetail().getSize() * cellDetail.getQuantity();
+        }
+        if (detail.getSize() * detailInCellDto.getQuantity() > cell.getSpace() - occupiedSpace) {
             throw new CellNotEnoughStorageException();
         }
         CellDetail cellDetail = new CellDetail();
@@ -119,6 +127,7 @@ public class CellInStockController {
         cellDetail.setDetail(detail);
         cellDetail.setQuantity(detailInCellDto.getQuantity());
         cellDetail.setAppearanceDate(detailInCellDto.getAppearanceDate());
+        cellDetailRepository.save(cellDetail);
 
         return HttpStatus.ACCEPTED;
     }
@@ -149,7 +158,7 @@ public class CellInStockController {
     @RequestMapping(method = DELETE, value = "cellDrop")
     public HttpStatus drop(@RequestParam Integer cellID) {
         Optional<CellInStock> optional = cellInStockRepository.findById(cellID);
-        if (!optional.isEmpty()) {
+        if (optional.isEmpty()) {
             throw new CellInStockNotFoundException();
         }
         CellInStock cell = optional.get();

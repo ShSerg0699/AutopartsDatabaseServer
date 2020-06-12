@@ -15,6 +15,7 @@ import java.util.Optional;
 import static org.springframework.web.bind.annotation.RequestMethod.*;
 
 @RestController
+@CrossOrigin
 public class BuyerController {
     private final BuyerRepository buyerRepository;
     private final PurchaseRepository purchaseRepository;
@@ -58,7 +59,7 @@ public class BuyerController {
     @RequestMapping(method = DELETE, value = "buyerDrop")
     public HttpStatus drop(@RequestParam Integer buyerID) {
         Optional<Buyer> optional = buyerRepository.findById(buyerID);
-        if (!optional.isEmpty()) {
+        if (optional.isEmpty()) {
             throw new BuyerNotFoundException();
         }
         //fixme: drop cascade

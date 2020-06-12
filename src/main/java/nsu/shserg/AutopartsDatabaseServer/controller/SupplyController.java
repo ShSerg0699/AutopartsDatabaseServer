@@ -23,6 +23,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.*;
 import static org.springframework.web.bind.annotation.RequestMethod.DELETE;
 
 @RestController
+@CrossOrigin
 public class SupplyController {
     private final SupplyRepository supplyRepository;
     private final SupplyDetailRepository supplyDetailRepository;
@@ -171,7 +172,7 @@ public class SupplyController {
     @RequestMapping(method = DELETE, value = "supplyDrop")
     public HttpStatus drop(@RequestParam Integer supplyID) {
         Optional<Supply> optional = supplyRepository.findById(supplyID);
-        if (!optional.isEmpty()) {
+        if (optional.isEmpty()) {
             throw new SupplyNotFoundException();
         }
         Supply supply = optional.get();
