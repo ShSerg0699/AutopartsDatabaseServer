@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet author="ShSergey" id="initialization_inserts">
+        <sqlFile path="db/changelog/inserts/Buyer.sql"/>
+        <sqlFile path="db/changelog/inserts/CellInStock.sql"/>
+        <sqlFile path="db/changelog/inserts/Detail.sql"/>
+        <sqlFile path="db/changelog/inserts/Purchase.sql"/>
+        <sqlFile path="db/changelog/inserts/Supplier.sql"/>
+        <sqlFile path="db/changelog/inserts/Supply.sql"/>
+        <sqlFile path="db/changelog/inserts/SupplyDetail.sql"/>
+        <sqlFile path="db/changelog/inserts/CellDetail.sql"/>
+        <sqlFile path="db/changelog/inserts/PriceList.sql"/>
+        <sqlFile path="db/changelog/inserts/PurchaseDetail.sql"/>
+    </changeSet>
+
+</databaseChangeLog>
