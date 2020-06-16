@@ -11,6 +11,6 @@ public class CellInStock {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer cellID;
 
-    private int space;
+    private Integer space;
 
 }

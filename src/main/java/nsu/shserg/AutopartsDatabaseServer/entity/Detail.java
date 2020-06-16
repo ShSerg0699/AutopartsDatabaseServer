@@ -11,7 +11,7 @@ public class Detail {
 
     private String name;
 
-    private int price;
+    private Integer price;
 
-    private int size;
+    private Integer size;
 }

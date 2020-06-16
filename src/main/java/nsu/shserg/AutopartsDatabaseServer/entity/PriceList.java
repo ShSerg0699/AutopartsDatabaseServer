@@ -16,5 +16,5 @@ public class PriceList {
     @ManyToOne
     private Supplier supplier;
 
-    private int price;
+    private Integer price;
 }

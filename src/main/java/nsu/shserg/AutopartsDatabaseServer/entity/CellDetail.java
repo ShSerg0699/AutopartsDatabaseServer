@@ -17,7 +17,7 @@ public class CellDetail {
     @ManyToOne
     private CellInStock cellInStock;
 
-    private int quantity;
+    private Integer quantity;
 
     private Date appearanceDate;
 }

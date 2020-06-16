@@ -46,10 +46,10 @@ CREATE TABLE public.purchase_detail
 CREATE TABLE public.supplier
 (
     supplierid integer primary key generated always as identity,
-    contract bigint,
+    contract bigint NULL,
     delivery_time character varying(255),
-    discount integer,
-    guarantee character varying(255),
+    discount integer NULL,
+    guarantee character varying(255) NULL,
     name character varying(255),
     type integer NOT NULL
 );

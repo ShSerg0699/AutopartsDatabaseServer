@@ -17,6 +17,6 @@ public class PurchaseDetail {
     @ManyToOne
     private Purchase purchase;
 
-    private int quantity;
+    private Integer quantity;
 
 }

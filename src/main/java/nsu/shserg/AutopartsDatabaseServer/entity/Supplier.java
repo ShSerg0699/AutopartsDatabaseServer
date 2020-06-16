@@ -12,16 +12,13 @@ public class Supplier {
 
     private String name;
 
-    private int type;
+    private Integer type;
 
     private String deliveryTime;
 
-    @Column(nullable=true)
     private String guarantee;
 
-    @Column(nullable=true)
-    private long contract;
+    private Long contract;
 
-    @Column(nullable=true)
-    private int discount;
+    private Integer discount;
 }

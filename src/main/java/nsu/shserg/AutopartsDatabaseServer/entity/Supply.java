@@ -13,9 +13,9 @@ public class Supply {
 
     private Date deliveryDate;
 
-    private int marriageRate;
+    private Integer marriageRate;
 
-    private int customsClearance;
+    private Integer customsClearance;
 
     @OneToOne(cascade = CascadeType.ALL)
     private Supplier supplier;

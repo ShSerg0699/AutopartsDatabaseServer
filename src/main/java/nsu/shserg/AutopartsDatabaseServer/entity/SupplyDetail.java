@@ -17,5 +17,5 @@ public class SupplyDetail {
     @ManyToOne
     private Supply supply;
 
-    private int quantity;
+    private Integer quantity;
 }
